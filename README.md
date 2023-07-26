@@ -1,70 +1,106 @@
-# Getting Started with Create React App
+# eslint-visitor-keys
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+[![npm version](https://img.shields.io/npm/v/eslint-visitor-keys.svg)](https://www.npmjs.com/package/eslint-visitor-keys)
+[![Downloads/month](https://img.shields.io/npm/dm/eslint-visitor-keys.svg)](http://www.npmtrends.com/eslint-visitor-keys)
+[![Build Status](https://github.com/eslint/eslint-visitor-keys/workflows/CI/badge.svg)](https://github.com/eslint/eslint-visitor-keys/actions)
 
-## Available Scripts
+Constants and utilities about visitor keys to traverse AST.
 
-In the project directory, you can run:
+## 💿 Installation
 
-### `npm start`
+Use [npm] to install.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```bash
+$ npm install eslint-visitor-keys
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Requirements
 
-### `npm test`
+- [Node.js] `^12.22.0`, `^14.17.0`, or `>=16.0.0`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### `npm run build`
+## 📖 Usage
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+To use in an ESM file:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```js
+import * as evk from "eslint-visitor-keys"
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+To use in a CommonJS file:
 
-### `npm run eject`
+```js
+const evk = require("eslint-visitor-keys")
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### evk.KEYS
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+> type: `{ [type: string]: string[] | undefined }`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Visitor keys. This keys are frozen.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+This is an object. Keys are the type of [ESTree] nodes. Their values are an array of property names which have child nodes.
 
-## Learn More
+For example:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+console.log(evk.KEYS.AssignmentExpression) // → ["left", "right"]
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### evk.getKeys(node)
 
-### Code Splitting
+> type: `(node: object) => string[]`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Get the visitor keys of a given AST node.
 
-### Analyzing the Bundle Size
+This is similar to `Object.keys(node)` of ES Standard, but some keys are excluded: `parent`, `leadingComments`, `trailingComments`, and names which start with `_`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+This will be used to traverse unknown nodes.
 
-### Making a Progressive Web App
+For example:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```js
+const node = {
+    type: "AssignmentExpression",
+    left: { type: "Identifier", name: "foo" },
+    right: { type: "Literal", value: 0 }
+}
+console.log(evk.getKeys(node)) // → ["type", "left", "right"]
+```
 
-### Advanced Configuration
+### evk.unionWith(additionalKeys)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+> type: `(additionalKeys: object) => { [type: string]: string[] | undefined }`
 
-### Deployment
+Make the union set with `evk.KEYS` and the given keys.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+- The order of keys is, `additionalKeys` is at first, then `evk.KEYS` is concatenated after that.
+- It removes duplicated keys as keeping the first one.
 
-### `npm run build` fails to minify
+For example:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```js
+console.log(evk.unionWith({
+    MethodDefinition: ["decorators"]
+})) // → { ..., MethodDefinition: ["decorators", "key", "value"], ... }
+```
+
+## 📰 Change log
+
+See [GitHub releases](https://github.com/eslint/eslint-visitor-keys/releases).
+
+## 🍻 Contributing
+
+Welcome. See [ESLint contribution guidelines](https://eslint.org/docs/developer-guide/contributing/).
+
+### Development commands
+
+- `npm test` runs tests and measures code coverage.
+- `npm run lint` checks source codes with ESLint.
+- `npm run coverage` opens the code coverage report of the previous test with your default browser.
+- `npm run release` publishes this package to [npm] registory.
+
+
+[npm]: https://www.npmjs.com/
+[Node.js]: https://nodejs.org/
+[ESTree]: https://github.com/estree/estree
